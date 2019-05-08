@@ -51,8 +51,8 @@ length_of_training_records = 10
 training_rate = 1e-5
 
 #IO
-# data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
-data_add ="C:\\Users\\UIC\\Downloads\\"
+data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
+# data_add ="C:\\Users\\UIC\\Downloads\\"
 # list file in directory
 file_names = [] 
 for root, dirs, files in os.walk(data_add):
@@ -77,17 +77,17 @@ GRU_outputs, final_state = tf.nn.dynamic_rnn(cell, ph_input_vector, initial_stat
 #fully connect layer
 W_fc_1 = weight_variable([5, 20])
 b_fc_1 = bias_variable([20])
-ph_u_1,ph_v_1,h_fc_1 = oscillator(tf.matmul(tf.transpose(final_state),W_fc_1)+b_fc_1,ph_u_1,ph_v_1,ph_z_1)
+r_u_1,r_v_1,h_fc_1 = oscillator(tf.matmul(tf.transpose(final_state),W_fc_1)+b_fc_1,ph_u_1,ph_v_1,ph_z_1)
 # h_fc_1 = tf.nn.leaky_relu(tf.matmul(tf.transpose(final_state),W_fc_1)+b_fc_1)
 
 W_fc_2 = weight_variable([20, 30])
 b_fc_2 = bias_variable([30])
-ph_u_2,ph_v_2,h_fc_2 = oscillator(tf.matmul(h_fc_1,W_fc_2)+b_fc_2,ph_u_2,ph_v_2,ph_z_2)
+r_u_2,r_v_2,h_fc_2 = oscillator(tf.matmul(h_fc_1,W_fc_2)+b_fc_2,ph_u_2,ph_v_2,ph_z_2)
 # h_fc_2 = tf.nn.leaky_relu(tf.matmul(h_fc_1,W_fc_2)+b_fc_2)
 
 W_fc_3 = weight_variable([30, 5])
 b_fc_3 = bias_variable([5])
-ph_u_3,ph_v_3,h_fc_3 = oscillator(tf.matmul(h_fc_2,W_fc_3)+b_fc_3,ph_u_3,ph_v_3,ph_z_3)
+r_u_3,r_v_3,h_fc_3 = oscillator(tf.matmul(h_fc_2,W_fc_3)+b_fc_3,ph_u_3,ph_v_3,ph_z_3)
 # h_fc_3 = tf.nn.leaky_relu(tf.matmul(h_fc_2,W_fc_3)+b_fc_3)
 
 
@@ -108,17 +108,34 @@ with tf.Session() as sess:
         # continue
 ###############
         #train network
+        ################
+        z_1,u_1,v_1 = np.zeros((1,20)),np.zeros((1,20)),np.zeros((1,20))
+        z_2,u_2,v_2= np.zeros((1,30)),np.zeros((1,30)),np.zeros((1,30))
+        z_3,u_3,v_3 = np.zeros((1,5)),np.zeros((1,5)),np.zeros((1,5))
+        ################
         for i in range(0,epoch):
             count = 0
             loss = np.zeros(len(training_set))
+            ################
+
+            ################
             for record in training_set:
                 input_vector = np.reshape(record[:length_of_training_records-1], (length_of_training_records-1,-1,1))
                 label_vector = record[length_of_training_records-1:]
 
-                _, l, prediction = sess.run([train_step,MSE,h_fc_3], feed_dict = {
-                    ph_input_vector:input_vector,
-                    ph_label_vector:label_vector
+
+                _, l,u_1,v_1,z_1,u_2,v_2,z_2,u_3,v_3,z_3 = sess.run(
+                    [train_step,MSE,
+                    r_u_1,r_v_1,h_fc_1,
+                    r_u_2,r_v_2,h_fc_2,
+                    r_u_3,r_v_3,h_fc_3
+                    ], feed_dict = {
+                    ph_input_vector:input_vector,ph_label_vector:label_vector
+                    ,ph_u_1:u_1,ph_u_2:u_2,ph_u_3:u_3,
+                    ph_v_1:v_1,ph_v_2:v_2,ph_v_3:v_3,
+                    ph_z_1:z_1,ph_z_2:z_2,ph_z_3:z_3
                     })
+
                 loss[count] = l
                 count += 1
             print("epoch No."+str(i)+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
@@ -130,18 +147,30 @@ with tf.Session() as sess:
             input_vector = np.reshape(record[:length_of_training_records-1], (length_of_training_records-1,-1,1))
             label_vector = record[length_of_training_records-1:]
 
-            _, l, prediction = sess.run([train_step,MSE,h_fc_3], feed_dict = {
-                ph_input_vector:input_vector,
-                ph_label_vector:label_vector
-                })
+            l,u_1,v_1,z_1,u_2,v_2,z_2,u_3,v_3,z_3 = sess.run(
+            [MSE,r_u_1,r_v_1,h_fc_1,r_u_2,r_v_2,h_fc_2,r_u_3,r_v_3,h_fc_3], 
+            feed_dict = {
+            ph_input_vector:input_vector,ph_label_vector:label_vector
+            ,ph_u_1:u_1,ph_u_2:u_2,ph_u_3:u_3,
+            ph_v_1:v_1,ph_v_2:v_2,ph_v_3:v_3,
+            ph_z_1:z_1,ph_z_2:z_2,ph_z_3:z_3
+            })
+
             loss[count] = l
             count += 1
         print("Test finished "+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
 
         # predict tomorrow's indicators
         input_vector = np.reshape(latest_day, (length_of_training_records-1,-1,1))
-        prediction = sess.run(h_fc_3, feed_dict = {
-        ph_input_vector:input_vector        })
+
+        u_1,v_1,z_1,u_2,v_2,z_2,u_3,v_3,prediction = sess.run(
+        [r_u_1,r_v_1,h_fc_1,r_u_2,r_v_2,h_fc_2,r_u_3,r_v_3,h_fc_3], 
+        feed_dict = {
+        ph_input_vector:input_vector
+        ,ph_u_1:u_1,ph_u_2:u_2,ph_u_3:u_3,
+        ph_v_1:v_1,ph_v_2:v_2,ph_v_3:v_3,
+        ph_z_1:z_1,ph_z_2:z_2,ph_z_3:z_3
+        })
 
         prediction = np.asarray(prediction)
         prediction = prediction*norms
