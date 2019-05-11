@@ -46,13 +46,16 @@ def read_lastest_indicator():
     return 0
 
 #hyper parameter
-epoch = 1200
+epoch = 1800
 length_of_training_records = 10
 training_rate = 1e-5
 
 #IO
 data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
 # data_add ="C:\\Users\\UIC\\Downloads\\"
+
+
+prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Predicting_Value\\"
 # list file in directory
 file_names = [] 
 for root, dirs, files in os.walk(data_add):
@@ -104,21 +107,19 @@ with tf.Session() as sess:
 
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
+        z_1,u_1,v_1 = np.zeros((1,20)),np.zeros((1,20)),np.zeros((1,20))
+        z_2,u_2,v_2= np.zeros((1,30)),np.zeros((1,30)),np.zeros((1,30))
+        z_3,u_3,v_3 = np.zeros((1,5)),np.zeros((1,5)),np.zeros((1,5))
 ###############
         # continue
 ###############
         #train network
-        ################
-        z_1,u_1,v_1 = np.zeros((1,20)),np.zeros((1,20)),np.zeros((1,20))
-        z_2,u_2,v_2= np.zeros((1,30)),np.zeros((1,30)),np.zeros((1,30))
-        z_3,u_3,v_3 = np.zeros((1,5)),np.zeros((1,5)),np.zeros((1,5))
-        ################
+        loss_record = np.zeros(epoch)
+        std_record = np.zeros(epoch)
         for i in range(0,epoch):
             count = 0
             loss = np.zeros(len(training_set))
-            ################
 
-            ################
             for record in training_set:
                 input_vector = np.reshape(record[:length_of_training_records-1], (length_of_training_records-1,-1,1))
                 label_vector = record[length_of_training_records-1:]
@@ -138,6 +139,10 @@ with tf.Session() as sess:
 
                 loss[count] = l
                 count += 1
+            #######################
+            #write the loss and stc info into records 
+            loss_record[i], std_record[i] = np.mean(loss),np.std(loss)
+            #######################
             print("epoch No."+str(i)+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
 
         #test
@@ -160,6 +165,28 @@ with tf.Session() as sess:
             count += 1
         print("Test finished "+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
 
+        ###############################
+        #generate plot graphnump
+        index = file.index('.csv')
+        product_name = file[index-6:index]
+        img_add = file[:index]+".png"
+        step_count = np.arange(0,epoch)
+
+        step_count = step_count[20:]
+        loss_record = loss_record[20:]
+        std_record = std_record[20:]
+
+        plt.title(str(product_name))
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss & Stdv')
+        plt.plot(step_count,loss_record, 'y', label='Loss')
+        plt.plot(step_count,std_record, 'c', label='Stdv')
+        plt.axhline(y=np.mean(loss) , color='r',linestyle='-',label='test Loss')
+        plt.legend(loc='upper right')
+        plt.savefig(img_add)
+        plt.clf()
+        # plt.show()
+        ###############################
         # predict tomorrow's indicators
         input_vector = np.reshape(latest_day, (length_of_training_records-1,-1,1))
 
@@ -174,6 +201,9 @@ with tf.Session() as sess:
 
         prediction = np.asarray(prediction)
         prediction = prediction*norms
+
+        add_temp = prediction_add+product_name+".csv"
+        np.savetxt(add_temp,prediction,delimiter=",")
         print("for product "+str(file))
         print("for tomorrow's indicator "+str(prediction))
         print("     ")
