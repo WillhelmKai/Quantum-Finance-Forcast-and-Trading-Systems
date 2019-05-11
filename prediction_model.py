@@ -117,7 +117,37 @@ with tf.Session() as sess:
                 })
             loss[count] = l
             count += 1
+            #######################
+            #write the loss and stc info into records 
+            loss_record[i], std_record[i] = np.mean(loss),np.std(loss)
+            #######################
         print("Test finished "+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
+
+
+        ###############################
+        #generate plot graphnump
+        index = file.index('.csv')
+        product_name = file[index-6:index]
+        img_add = file[:index]+".png"
+        step_count = np.arange(0,epoch)
+
+        step_count = step_count[20:]
+        loss_record = loss_record[20:]
+        std_record = std_record[20:]
+
+        plt.title(str(product_name))
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss & Stdv')
+        plt.plot(step_count,loss_record, 'y', label='Loss')
+        plt.plot(step_count,std_record, 'c', label='Stdv')
+        plt.axhline(y=np.mean(loss) , color='r',linestyle='-',label='test Loss')
+        plt.legend(loc='upper right')
+        plt.savefig(img_add)
+        plt.clf()
+        # plt.show()
+        ###############################
+
+
 
         # predict tomorrow's indicators
         input_vector = np.reshape(latest_day, (length_of_training_records-1,-1,1))
