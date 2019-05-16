@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.contrib import slim
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import normalize
 
 def weight_variable(shape):
@@ -38,7 +39,7 @@ def read_lastest_indicator():
     return 0
 
 #hyper parameter
-epoch = 2500
+epoch = 1800
 length_of_training_records = 6
 training_rate = 1e-5
 
@@ -89,6 +90,8 @@ with tf.Session() as sess:
         # continue
 ###############
         #train network
+        loss_record = np.zeros(epoch)
+        std_record = np.zeros(epoch)
         for i in range(0,epoch):
             count = 0
             loss = np.zeros(len(training_set))
@@ -102,6 +105,10 @@ with tf.Session() as sess:
                     })
                 loss[count] = l
                 count += 1
+            #######################
+            #write the loss and stc info into records 
+            loss_record[i], std_record[i] = np.mean(loss),np.std(loss)
+            #######################
             print("epoch No."+str(i)+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
 
         #test
@@ -117,10 +124,6 @@ with tf.Session() as sess:
                 })
             loss[count] = l
             count += 1
-            #######################
-            #write the loss and stc info into records 
-            loss_record[i], std_record[i] = np.mean(loss),np.std(loss)
-            #######################
         print("Test finished "+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
 
 
