@@ -52,10 +52,10 @@ training_rate = 1e-5
 
 #IO
 # data_add ="C:\\Users\\UIC\\Downloads\\"
-# data_add ="/home/ubuntu/fyp2/Project_Data/"
-# prediction_add = "/home/ubuntu/fyp2/Predicting_Value/"
-data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
-prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Predicting_Value\\"
+data_add ="/home/ubuntu/fyp2/Project_Data/"
+prediction_add = "/home/ubuntu/fyp2/Predicting_Value/"
+# data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
+# prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Predicting_Value\\"
 # list file in directory
 file_names = [] 
 for root, dirs, files in os.walk(data_add):
@@ -169,22 +169,23 @@ with tf.Session() as sess:
         #generate plot graphnump
         index = file.index('.csv')
         product_name = file[index-6:index]
-        # img_add = file[:index]+".png"
-        # step_count = np.arange(0,epoch)
+        img_add = file[:index]+".png"
+        step_count = np.arange(0,epoch)
 
-        # step_count = step_count[20:]
-        # loss_record = loss_record[20:]
-        # std_record = std_record[20:]
+        step_count = step_count[20:]
+        loss_record = loss_record[20:]
+        std_record = std_record[20:]
 
-        # plt.title(str(product_name))
-        # plt.xlabel('Epoch')
-        # plt.ylabel('Loss & Stdv')
-        # plt.plot(step_count,loss_record, 'y', label='Loss')
-        # plt.plot(step_count,std_record, 'c', label='Stdv')
-        # plt.axhline(y=np.mean(loss) , color='r',linestyle='-',label='test Loss')
-        # plt.legend(loc='upper right')
-        # plt.savefig(img_add)
-        # plt.clf()
+        plt.title(str(product_name))
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss & Stdv')
+        plt.plot(step_count,loss_record, 'y', label='Loss')
+        plt.plot(step_count,std_record, 'c', label='Stdv')
+        plt.axhline(y=np.mean(loss) , color='r',linestyle='-',label='test Loss')
+        plt.legend(loc='upper right')
+        plt.savefig(img_add)
+        plt.clf()
+
         # plt.show()
         ###############################
         # predict tomorrow's indicators
@@ -203,7 +204,7 @@ with tf.Session() as sess:
         prediction = prediction*norms
 
         add_temp = prediction_add+product_name+".csv"
-        np.savetxt(add_temp,[prediction[0][3]],delimiter=",")
+        np.savetxt(add_temp,[prediction[0][2]],delimiter=",")
         print("for product "+str(file))
         print("for tomorrow's indicator "+str(prediction))
         print("     ")
