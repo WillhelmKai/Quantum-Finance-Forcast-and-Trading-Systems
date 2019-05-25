@@ -203,7 +203,7 @@ with tf.Session() as sess:
         prediction = prediction*norms
 
         add_temp = prediction_add+product_name+".csv"
-        np.savetxt(add_temp,[prediction[0][3]],delimiter=",")
+        np.savetxt(add_temp,[prediction[0][2]],delimiter=",")
         print("for product "+str(file))
         print("for tomorrow's indicator "+str(prediction))
         print("     ")
