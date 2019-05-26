@@ -26,36 +26,59 @@ def bias_variable(shape):
 def read_csv(file):
     result = []
     current_day = []
-    data = np.genfromtxt(file, delimiter=",",skip_header=1)
-    data = data[:,[3,4,5,6,9,10,11,12,13,14,15,16]]
-    data, norms = normalize(data, axis=0, norm='l2',return_norm=True)
+    tr_set = []
+    te_set = []
 
-    current_day.append(data[:length_of_training_records-1])
+    data = np.genfromtxt(file, delimiter=",",skip_header=1)
+    data = np.flip(data, 0)
+
+    np.set_printoptions(suppress=True)
+    data = data[:,[3,4,5,6,9,10,11,12,13,14,15,16]]
+#    data = data[:,[3,4,5,6]]
+    data, norms = normalize(data, axis=0, norm='l2',return_norm=True) #normalize data
+  
+    #form data set for latest days to do preiction
+    current_day.append(data[-(length_of_training_records-1):])
     current_day = np.array(current_day)
 
-    for i in range(length_of_training_records,len(data)):
-        result.append(data[i-length_of_training_records:i])
-    result = np.array(result)
-    np.random.shuffle(result)
-    tr_set = result[:int(0.8*len(result))]
-    te_set = result[int(0.8*len(result)):]
+    data = data[:-(length_of_training_records-1)]
+    tr = data[:int(0.8*len(data))]
+    te = data[int(0.8*len(data)):]
+
+    for i in range(length_of_training_records,len(tr)):
+        tr_set.append(data[i-length_of_training_records:i])
+    tr_set = np.array(tr_set)
+
+    for i in range(length_of_training_records,len(te)):
+        te_set.append(data[i-length_of_training_records:i])
+    te_set = np.array(te_set)
+
+    np.random.shuffle(tr_set)
+    # np.random.shuffle(te_set)
+
+    # for i in range(length_of_training_records,len(data)):
+    #     result.append(data[i-length_of_training_records:i])
+    # result = np.array(result)
+    # np.random.shuffle(result)
+    # tr_set = result[:int(0.8*len(result))]
+    # te_set = result[int(0.8*len(result)):]
     return tr_set, te_set, current_day, norms
+
 
 def read_lastest_indicator():
     result= []
     return 0
 
 #hyper parameter
-epoch = 30
+epoch = 1800
 length_of_training_records = 10
 training_rate = 1e-5
 
 #IO
-# data_add ="C:\\Users\\UIC\\Downloads\\"
 data_add ="/home/ubuntu/fyp2/Project_Data/"
 prediction_add = "/home/ubuntu/fyp2/Predicting_Value/"
 # data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
-# prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Predicting_Value\\"
+# prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Prediction\\"
 # list file in directory
 file_names = [] 
 for root, dirs, files in os.walk(data_add):
@@ -146,6 +169,9 @@ with tf.Session() as sess:
             print("epoch No."+str(i)+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
 
         #test
+        actual_low = np.zeros(len(testing_set))
+        predicted_low = np.zeros(len(testing_set))
+
         count = 0
         loss = np.zeros(len(testing_set))
         for record in testing_set:
@@ -160,10 +186,33 @@ with tf.Session() as sess:
             ph_v_1:v_1,ph_v_2:v_2,ph_v_3:v_3,
             ph_z_1:z_1,ph_z_2:z_2,ph_z_3:z_3
             })
-
             loss[count] = l
+
+            actual_low[count] = (label_vector*norms)[0][2]
+            predicted_low[count] = (z_3*norms)[0][2]
             count += 1
         print("Test finished "+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
+
+        ###############################
+        #generate plot graphnump
+        index = file.index('.csv')
+        product_name = file[index-6:index]
+        img_add = file[:index]+"_PvsA.png"
+        step_count = np.arange(0,len(testing_set))
+
+        plt.title(str(product_name))
+        plt.xlabel('Days')
+        plt.ylabel('Values')
+        plt.plot(step_count,predicted_low, 'y', label='Prediction')
+        plt.plot(step_count,actual_low, 'c', label='Actual')
+        plt.legend(loc='upper right')
+        plt.savefig(img_add)
+        plt.clf()
+
+        distance = predicted_low - actual_low 
+        print("distance mean: "+str(np.mean(distance))+"  std: "+str(np.std(distance)))
+        # plt.show()
+        ###############################
 
         ###############################
         #generate plot graphnump
