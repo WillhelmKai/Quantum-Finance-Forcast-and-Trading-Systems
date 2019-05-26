@@ -68,7 +68,7 @@ def read_lastest_indicator():
     return 0
 
 #hyper parameter
-epoch = 1000
+epoch = 1800
 length_of_training_records = 6
 training_rate = 1e-5
 
@@ -76,11 +76,11 @@ training_rate = 1e-5
 # data_add ="C:\\Users\\UIC\\Desktop\\Project_Data\\"
 # prediction_add = "C:\\Users\\UIC\\Desktop\\Predicting_Value\\"
 
-# data_add ="/home/ubuntu/fyp2/Project_Data/"
-# prediction_add = "/home/ubuntu/fyp2/Predicting_Value/"
+data_add ="/home/ubuntu/fyp2/Project_Data/"
+prediction_add = "/home/ubuntu/fyp2/Predicting_Value/"
 
-data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
-prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Predicting_Value\\"
+# data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
+# prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Prediction\\"
 # list file in directory
 file_names = [] 
 for root, dirs, files in os.walk(data_add):
@@ -171,6 +171,8 @@ with tf.Session() as sess:
             print("epoch No."+str(i)+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
 
         #test
+        actual_low = np.zeros(len(testing_set))
+        predicted_low = np.zeros(len(testing_set))
 
         count = 0
         loss = np.zeros(len(testing_set))
@@ -186,10 +188,35 @@ with tf.Session() as sess:
             ph_v_1:v_1,ph_v_2:v_2,ph_v_3:v_3,
             ph_z_1:z_1,ph_z_2:z_2,ph_z_3:z_3
             })
-
             loss[count] = l
+
+            actual_low[count] = (label_vector*norms)[0][2]
+            predicted_low[count] = (z_3*norms)[0][2]
             count += 1
         print("Test finished "+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
+
+        ###############################
+        #generate plot graphnump
+        index = file.index('.csv')
+        product_name = file[index-6:index]
+        img_add = file[:index]+"_PvsA.png"
+        step_count = np.arange(0,len(testing_set))
+
+        plt.title(str(product_name))
+        plt.xlabel('Days')
+        plt.ylabel('Values')
+        plt.plot(step_count,predicted_low, 'y', label='Prediction')
+        plt.plot(step_count,actual_low, 'c', label='Actual')
+        plt.legend(loc='upper right')
+        plt.savefig(img_add)
+        plt.clf()
+
+        distance = predicted_low - actual_low 
+        print("distance mean: "+str(np.mean(distance))+"  std: "+str(np.std(distance)))
+        # plt.show()
+        ###############################
+
+
 
         ###############################
         #generate plot graphnump
