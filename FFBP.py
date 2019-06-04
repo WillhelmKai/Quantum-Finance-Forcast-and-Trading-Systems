@@ -13,7 +13,6 @@ def bias_variable(shape):
     initial = tf.contrib.layers.xavier_initializer()
     return tf.Variable(initial(shape))
 
-
 def read_csv(file):
     result = []
     current_day = []
@@ -127,7 +126,7 @@ with tf.Session() as sess:
             #write the loss and stc info into records 
             loss_record[i], std_record[i] = np.mean(loss),np.std(loss)
             #######################
-            print("epoch No."+str(i)+ " avrage loss: "+str(np.mean(loss))+" std "+str(np.std(loss)))
+            print("epoch No."+str(i)+ " avrage loss: "+str(np.mean(loss)**.5)+" std "+str(np.std(loss)))
 
         #test
         actual_low = np.zeros(len(testing_set))
