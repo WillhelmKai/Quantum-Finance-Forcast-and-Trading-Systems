@@ -9,9 +9,9 @@ def oscillator(I, u, v, z):
     a1, a2, a3, a4 = 0.6, 0.6, -0.5, 0.5
     b1, b2, b3, b4 = -0.6, -0.6, -0.5, 0.5
     k = 50
-    u_v = tf.nn.tanh(a1*u + a2*v - a3*z + a4*I)
-    v_v = tf.nn.tanh(b1*z - b2*u - b3*v + b4*I)
-    w = tf.nn.tanh(I)
+    u_v = tf.nn.sigmoid(a1*u + a2*v - a3*z + a4*I)
+    v_v = tf.nn.sigmoid(b1*z - b2*u - b3*v + b4*I)
+    w = tf.nn.sigmoid(I)
     z_v = ( v_v - u_v )* tf.exp(-k*I*I)+ w
     return u_v, v_v, z_v
 
