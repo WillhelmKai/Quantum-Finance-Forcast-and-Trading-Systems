@@ -55,16 +55,17 @@ def read_csv(file):
     return tr_set, te_set, current_day, norms
 
 #hyper parameter
-epoch = 1800
-length_of_training_records = 6
+epoch = 40
+length_of_training_records = 7
 training_rate = 1e-5
+kp = 0.1
 
 #IO
-# data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
-# prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Prediction\\"
+data_add ="C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Project_Data\\"
+prediction_add = "C:\\Users\\willh\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\Prediction\\"
 
-data_add ="/home/ubuntu/fyp2/Project_Data/"
-prediction_add = "/home/ubuntu/fyp2/Predicting_Value/"
+# data_add ="/home/ubuntu/fyp2/Project_Data/"
+# prediction_add = "/home/ubuntu/fyp2/Predicting_Value/"
 # list file in directory
 file_names = [] 
 for root, dirs, files in os.walk(data_add):
@@ -76,23 +77,26 @@ for root, dirs, files in os.walk(data_add):
 ph_input_vector = tf.placeholder(tf.float32,[None, 4,1])
 ph_label_vector = tf.placeholder(tf.float32,[1,4])
 
-cell = tf.nn.rnn_cell.GRUCell(num_units = 1)
+cell = tf.nn.rnn_cell.GRUCell(num_units = 20)
 init_state = cell.zero_state(batch_size=4,dtype = tf.float32)#batch size intented to be, out can be [-1, 1100] multiply oneby one
 GRU_outputs, final_state = tf.nn.dynamic_rnn(cell, ph_input_vector, initial_state=init_state, time_major=True)
 
 #fully connect layer
-W_fc_1 = weight_variable([4, 20])
-b_fc_1 = bias_variable([20])
-h_fc_1 = tf.nn.leaky_relu(tf.matmul(tf.transpose(final_state),W_fc_1)+b_fc_1)
+W_fc_1 = weight_variable([20, 60])
+b_fc_1 = bias_variable([60])
+h_fc_1 = tf.nn.leaky_relu(tf.matmul(final_state,W_fc_1)+b_fc_1)
 
-W_fc_2 = weight_variable([20, 30])
-b_fc_2 = bias_variable([30])
+h_fc_1 = tf.nn.dropout(h_fc_1, keep_prob = kp)
+
+W_fc_2 = weight_variable([60, 60])
+b_fc_2 = bias_variable([60])
 h_fc_2 = tf.nn.leaky_relu(tf.matmul(h_fc_1,W_fc_2)+b_fc_2)
 
-W_fc_3 = weight_variable([30, 4])
-b_fc_3 = bias_variable([4])
+W_fc_3 = weight_variable([60, 1])
+b_fc_3 = bias_variable([1])
 h_fc_3 = tf.nn.leaky_relu(tf.matmul(h_fc_2,W_fc_3)+b_fc_3)
 
+h_fc_3 = tf.transpose(h_fc_3)
 #evaluate and optimization
 MSE = tf.reduce_mean((ph_label_vector- h_fc_3)**2)
 # MSE,_= tf.metrics.mean_squared_error(ph_label_vector, final_state)
@@ -113,6 +117,7 @@ with tf.Session() as sess:
         loss_record = np.zeros(epoch)
         std_record = np.zeros(epoch)
         for i in range(0,epoch):
+            training_rate = 1e-4/(1+np.log(i+1))
             count = 0
             loss = np.zeros(len(training_set))
             for record in training_set:
@@ -125,6 +130,7 @@ with tf.Session() as sess:
                     })
                 loss[count] = l
                 count += 1
+
             #######################
             #write the loss and stc info into records 
             loss_record[i], std_record[i] = np.mean(loss),np.std(loss)
@@ -133,6 +139,7 @@ with tf.Session() as sess:
 
         #test
         actual_low = np.zeros(len(testing_set))
+        actual_high = np.zeros(len(testing_set))
         predicted_low = np.zeros(len(testing_set))
 
         count = 0
@@ -148,6 +155,7 @@ with tf.Session() as sess:
             loss[count] = l
 
             actual_low[count] = (label_vector*norms)[0][2]
+            actual_high[count] = (label_vector*norms)[0][1]
             predicted_low[count] = (prediction*norms)[0][2]
 
 
@@ -171,8 +179,9 @@ with tf.Session() as sess:
         plt.savefig(img_add)
         plt.clf()
 
-        distance = predicted_low - actual_low 
-        print("distance mean: "+str(np.mean(distance))+"  std: "+str(np.std(distance)))
+        distance = predicted_low - actual_low
+        variation = actual_high - actual_low 
+        print("distance mean: "+str(np.mean(distance))+"  std: "+str(np.std(distance))+"  variation mean: "+str(np.mean(variation))+" std: "+str(np.std(variation)))
         # plt.show()
         ###############################
 
