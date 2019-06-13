@@ -5,7 +5,11 @@ With average global trading transaction amounts exceeding 5 tril-lion dollars pe
 Keywords: Recurrent Neural Network, Quantum Finance, Quantum Price Level, Financial Forecasting, Intelligent Trading.
 
 To reproduce prediction result:
+
 1.Run /data_retrive/QF_peoject.mq4 on MT4
+
 2.Change 3 directories, data_add, prediction_add and model_add, in FFBP_L2, RNN_L2 or QPL_L2 to directories store .csv data, prediction results and network parameter
+
 3.Run FFBP_L2, RNN_L2 or QPL_L2 on Python 3.6 Tensorflow >= 1.9 (GPU version to be defined) to train the model
+
 4.Enable "continue" in codes, e.g. line 179 FFBP_l2 , and run again
