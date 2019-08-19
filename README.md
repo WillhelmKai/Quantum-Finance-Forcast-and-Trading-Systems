@@ -6,6 +6,14 @@ With average global trading transaction amounts exceeding 5 tril-lion dollars pe
 
 Keywords: Recurrent Neural Network, Quantum Finance, Quantum Price Level, Financial Forecasting, Intelligent Trading.
 
+## Check the Performance
+a. Prediction Low VS. Actual Low Price on a 200 days' real testing set
+>  Testing Set in /Project_Data/.
+>  Loss Steps and Prediction VS. Actual Graph in /Preciction_Results/.
+
+
+b. A trading algorithm with return rate of about 15%/M is developed, according to prediction
+>  An account statement for a half month is listed in ./Trading_Experiment_Result.htm 
 
 
 ## To reproduce prediction result:
@@ -19,8 +27,12 @@ Install MateTrader4
 2. Mordify data storage setting with your own configuration
 > Change 3 directories, data_add, prediction_add and model_add, in FFBP_L2, RNN_L2 or QPL_L2 to directories store .csv data, prediction results and network parameter
 
-3.To train the model
-> Run .py programs e.g.FFBP_l2_transfered.py
+3. To train the model
+> Run .py programs e.g.normal_distribution_QFFTS.py is the best performed ones
 
-4.To get prediction for today
+4. To get prediction for today
 > Enable "continue" in codes, e.g. line 179 FFBP_l2 , and run again
+
+5. Selecting most valuable features with genetic algorithm
+> Run feature_selection.py
+
